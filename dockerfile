@@ -35,13 +35,13 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 COPY . /app
 
-# Satisfy composer.json autoload.classmap paths
-RUN mkdir -p database/seeds database/factories
+# Create paths Composer expects from composer.json
+RUN mkdir -p app/Support database/seeds database/factories
 
-# Install without triggering scripts first
-RUN composer install --no-dev --no-scripts
+# Create missing helpers file so Composer autoload does not fail
+RUN [ -f app/Support/helpers.php ] || printf "<?php\n" > app/Support/helpers.php
 
-# Then build optimized autoload after the app is fully present
+RUN composer install --no-dev --no-scripts --no-autoloader
 RUN composer dump-autoload --optimize
 
 RUN npm ci && npm run production
