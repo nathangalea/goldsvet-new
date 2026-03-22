@@ -33,16 +33,21 @@ WORKDIR /app
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-COPY composer.json composer.lock /app/
-RUN composer install --no-dev --no-scripts --optimize-autoloader
-
 COPY . /app
 
+# Satisfy composer.json autoload.classmap paths
+RUN mkdir -p database/seeds database/factories
+
+# Install without triggering scripts first
+RUN composer install --no-dev --no-scripts
+
+# Then build optimized autoload after the app is fully present
 RUN composer dump-autoload --optimize
-RUN php artisan package:discover || true
+
 RUN npm ci && npm run production
 
-RUN mkdir -p storage/framework/cache \
+RUN mkdir -p \
+    storage/framework/cache \
     storage/framework/sessions \
     storage/framework/views \
     storage/logs \
